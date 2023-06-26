@@ -1,0 +1,11 @@
+name: Deploy custom pihole container
+on:
+  push:
+    paths:
+      - 'release-versions/*'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hello World
+        run: echo "Hello World"
