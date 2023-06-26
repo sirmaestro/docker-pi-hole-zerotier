@@ -21,8 +21,8 @@ jobs:
         run: echo "{MODIFIED}={$([ -z "`git status --porcelain`" ] && echo "false" || echo "true")}" >> "$GITHUB_OUTPUT"
       - name: Debug
         run: |
-          echo ${{ steps.git-check.outputs.MODIFIED }}
-          echo ${{ steps.release-version.outputs.TAG_NAME }}
+          echo "${{ steps.git-check.outputs.MODIFIED }}"
+          echo "${{ steps.release-version.outputs.TAG_NAME }}"
       - name: Commit latest release version
         if: steps.git-check.outputs.MODIFIED == 'true'
         run: |
