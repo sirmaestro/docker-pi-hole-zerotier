@@ -14,7 +14,7 @@ jobs:
         id: release-version
         run: |
           curl -sL https://api.github.com/repos/pi-hole/pi-hole/releases/latest | \
-          jq -r ".tag_name" | tee release-versions/pi-hole-latest.txt | echo "{TAG_NAME}={$(cat)}" >> $GITHUB_OUTPUT
+          jq -r ".tag_name" | tee release-versions/pi-hole-latest.txt | echo "{TAG_NAME}={$(cat)}" >> "$GITHUB_OUTPUT"
       - name: Check for modified files
         id: git-check
         run: echo ::set-output name=modified::$([ -z "`git status --porcelain`" ] && echo "false" || echo "true")
