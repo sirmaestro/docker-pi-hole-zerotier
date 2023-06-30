@@ -61,8 +61,8 @@ jobs:
           git push
   build-docker:
     runs-on: ubuntu-latest
-    needs: [get-pihole-version, get-zerotier-version]
-    if: ${{ needs.get-pihole-version.outputs.NEW == true && needs.get-zerotier-version.outputs.NEW == true}}
+    # needs: [get-pihole-version, get-zerotier-version]
+    # if: ${{ needs.get-pihole-version.outputs.NEW == true && needs.get-zerotier-version.outputs.NEW == true}}
     steps:
       - uses: actions/checkout@v2
       - name: Docker meta
