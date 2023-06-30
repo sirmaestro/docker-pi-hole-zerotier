@@ -3,7 +3,6 @@ FROM pihole/pihole
 # Based on https://github.com/zerotier/ZeroTierOne/blob/dev/Dockerfile.release
 ARG VERSION
 
-RUN curl -o entrypoint.sh.release https://raw.githubusercontent.com/zerotier/ZeroTierOne/dev/entrypoint.sh.release
 RUN apt-get update -qq && apt-get install curl gpg -y
 RUN mkdir -p /usr/share/zerotier && \
     curl -o /usr/share/zerotier/tmp.asc "https://download.zerotier.com/contact%40zerotier.com.gpg" && \
@@ -15,7 +14,7 @@ RUN apt-get update -qq && apt-get install zerotier-one=${VERSION} curl iproute2 
 RUN rm -rf /var/lib/zerotier-one
 
 
-COPY entrypoint.sh.release /entrypoint.sh
+RUN curl -o /entrypoint.sh https://raw.githubusercontent.com/zerotier/ZeroTierOne/dev/entrypoint.sh.release
 RUN chmod 755 /entrypoint.sh
 
 HEALTHCHECK --interval=1s CMD bash /healthcheck.sh
