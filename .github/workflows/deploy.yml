@@ -1,11 +1,80 @@
-name: Deploy custom pihole container
+name: Get latest release version, build and deploy docker image
 on:
-  push:
-    paths:
-      - 'release-versions/*'
+  schedule:
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+env:
+  new_build: ${{ false }}
 jobs:
-  deploy:
+  get-pihole-version:
     runs-on: ubuntu-latest
+    outputs:
+      new: ${{ steps.commit.outputs.NEW }}
     steps:
-      - name: Hello World
-        run: echo "Hello World"
+      - uses: actions/checkout@v2
+      - name: Fetch pihole release version
+        id: release-version
+        run: |
+          curl -sL https://api.github.com/repos/pi-hole/docker-pi-hole/releases/latest | \
+          jq -r ".tag_name" | tee release-versions/pihole-latest.txt | \
+          echo "TAG_NAME=$(cat)" >> $GITHUB_OUTPUT
+      - name: Check for modified files
+        id: git-check
+        run: echo "MODIFIED=$([ -z "`git status --porcelain`" ] && echo "false" || echo "true")" >> $GITHUB_OUTPUT
+      - name: Commit latest release version
+        if: steps.git-check.outputs.MODIFIED == 'true'
+        id: commit
+        run: |
+          echo "NEW=true" >> $GITHUB_OUTPUT
+          git config --global user.name 'sirmaestro'
+          git config --global user.email 'jche681@aucklanduni.ac.nz'
+          git commit -am "New pihole release version ${{ steps.release-version.outputs.TAG_NAME }}"
+          git push
+  get-zerotier-version:
+    runs-on: ubuntu-latest
+    outputs:
+      new: ${{ steps.commit.outputs.NEW }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Fetch zerotier release version
+        id: release-version
+        run: |
+          curl -sL https://api.github.com/repos/zerotier/ZeroTierOne/releases/latest | \
+          jq -r ".tag_name" | tee release-versions/zerotier-latest.txt | \
+          echo "TAG_NAME=$(cat)" >> $GITHUB_OUTPUT
+      - name: Check for modified files
+        id: git-check
+        run: echo "MODIFIED=$([ -z "`git status --porcelain`" ] && echo "false" || echo "true")" >> $GITHUB_OUTPUT
+      - name: Commit latest release version
+        if: steps.git-check.outputs.MODIFIED == 'true'
+        id: commit
+        run: |
+          echo "NEW=true" >> $GITHUB_OUTPUT
+          git config --global user.name 'sirmaestro'
+          git config --global user.email 'jche681@aucklanduni.ac.nz'
+          git commit -am "New zerotier release version ${{ steps.release-version.outputs.TAG_NAME }}"
+          git push
+  build-docker:
+    runs-on: ubuntu-latest
+    needs: [get-pihole-version, get-zerotier-version]
+    if: ${{ needs.get-pihole-version.outputs.NEW == true && needs.get-zerotier-version.outputs.NEW == true}}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: expron/pihole-zerotier
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
